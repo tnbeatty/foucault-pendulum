@@ -1,21 +1,13 @@
-html
+doctype html
+
+html(lang='en')
 	head
 		link(href='stylesheets/screen.css', rel='stylesheet', type='text/css')
-
 		title Hello ThreeJS
-
 		script(src='js/jquery-2.1.0.min.js')
+
 	body
-		div#container
-			h1 Test Projects with <a href="http://threejs.org">ThreeJS</a>
-			ul
-				li: a.pure-button(href='#')#simplelight Simple Light
-				li: a.pure-button(href='#')#environment Fog Environment
-				li: a.pure-button(href='#')#foundhack Foundation Hack
-				li: a.pure-button(href='#')#objimport Object File Viewer
-				li: a.pure-button(href='#')#shedtour Shed Tour (OVR)
-			hr
-			h3: a(href="out/index.html") Extension Documentation
-			p Coded by <a href="http://natebeatty.com">Nate Beatty</a> for <a href="http://irisvr.com">IrisVR</a> in 2014.
+
+		script(src='js/three.js/three.min.js')
 
 		script(src='js/main.js')
