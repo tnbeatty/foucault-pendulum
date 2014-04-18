@@ -8,7 +8,7 @@ module.exports = function(grunt) {
         options: {
           port: 9001,
           base: '',
-          keepalive: true
+          // keepalive: true
         }
       }
     },
@@ -53,6 +53,6 @@ module.exports = function(grunt) {
   ]);
 
   grunt.registerTask('default', ['build']);
+  grunt.registerTask('serve', ['connect', 'watch']);
 
-  grunt.registerTask('serve', ['connect']);
 }

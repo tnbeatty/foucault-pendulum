@@ -12,23 +12,18 @@ var MYENV = { // The variables that define the game environment
   width: window.innerWidth,
   height: window.innerHeight,
   aspect: window.innerWidth / window.innerHeight,
-  unitsize: 250,
-  player: {
-    speed: 100,
-    rotation: 0.5,
-    height: 50
-  },
   scene: {
-    fogColor: 0xD6F1FF,
-    skyColor: '#D6F1FF',
+    bgColor: '#D6F1FF',
     floorColor: 0xEDCBA0,
-    cubeColor: 0xC5EDA0,
+    pendulumColor: 0x8000FF,
     lightColor: 0xF7EFBE
   }
 }
 
 // Global variables
 var scene, camera, renderer;
+var pendulumBob;
+var clock = new THREE.Clock(true);
 var isAnimating = true;
 
 function init() {
@@ -36,8 +31,8 @@ function init() {
 
   // Set up the camera
   camera = new THREE.PerspectiveCamera(60, MYENV.aspect, 1, 10000); // FOV, Aspect, Near, Far
-  camera.position.y = MYENV.player.height;
-  camera.position.z = 250;
+  camera.position.y = 25;
+  camera.position.z = 300;
   scene.add(camera);
 
   // Set up the scene
@@ -48,8 +43,8 @@ function init() {
   renderer.setSize(MYENV.width, MYENV.height);
 
   // Add canvas to the DOM
-  renderer.domElement.style.backgroundColor = MYENV.scene.skyColor;
-  renderer.setClearColor(MYENV.scene.skyColor);
+  renderer.domElement.style.backgroundColor = MYENV.scene.bgColor;
+  renderer.setClearColor(MYENV.scene.bgColor);
   document.getElementById('container').appendChild(renderer.domElement);
 
 }
@@ -57,31 +52,24 @@ function init() {
 function buildScene() {
 
   // Build the floor
-  // var floor = new THREE.Mesh(
-  //   new THREE.CubeGeometry(10 * MYENV.unitsize, 10, 10 * MYENV.unitsize),
-  //   new THREE.MeshLambertMaterial({
-  //     color: 0xEDCBA0
-  //   })
-  // );
-  // scene.add(floor);
-
   var cylinder = new THREE.Mesh(
     new THREE.CylinderGeometry(100, 100, 10, 50, 10, false),
     new THREE.MeshLambertMaterial({
-      color: 0xEDCBA0
+      color: MYENV.scene.floorColor
     })
   );
+  cylinder.position.y = -35;
   scene.add(cylinder);
 
-  // Add some cubes
-  var cubeG = new THREE.CubeGeometry(MYENV.unitsize * 0.3, MYENV.unitsize * 0.3,
-    MYENV.unitsize * 0.3);
-  var cubeM = new THREE.MeshLambertMaterial({
-    color: MYENV.scene.cubeColor
-  });
-  var cube = new THREE.Mesh(cubeG, cubeM);
-  cube.position.set(MYENV.unitsize, (MYENV.unitsize * 0.3) / 2, MYENV.unitsize);
-  scene.add(cube);
+  // Add a sphere
+  pendulumBob = new THREE.Mesh(
+    new THREE.SphereGeometry(20, 16, 16),
+    new THREE.MeshLambertMaterial({
+      color: MYENV.scene.pendulumColor
+    })
+  );
+  scene.add(pendulumBob);
+
 
   // Add the lighting
   var directionalLight1 = new THREE.DirectionalLight(MYENV.lightColor, 0.7);
@@ -98,6 +86,9 @@ function animate() {
 }
 
 function render() {
+  var timeDelta = clock.getElapsedTime();
+  pendulumBob.position.x = 100 * Math.cos(timeDelta);
+
   renderer.render(scene, camera);
 }
 
