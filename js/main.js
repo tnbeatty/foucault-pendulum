@@ -17,12 +17,15 @@ var MYENV = { // The variables that define the game environment
     floorColor: 0xEDCBA0,
     pendulumColor: 0x8000FF,
     lightColor: 0xF7EFBE
+  },
+  pendulum: {
+    length: 350
   }
 }
 
 // Global variables
 var scene, camera, renderer;
-var pendulumBob;
+var pBob, pPivot;
 var clock = new THREE.Clock(true);
 var isAnimating = true;
 
@@ -30,9 +33,9 @@ function init() {
   scene = new THREE.Scene();
 
   // Set up the camera
-  camera = new THREE.PerspectiveCamera(60, MYENV.aspect, 1, 10000); // FOV, Aspect, Near, Far
-  camera.position.y = 25;
-  camera.position.z = 300;
+  camera = new THREE.PerspectiveCamera(60, MYENV.aspect, 1, 1000); // FOV, Aspect, Near, Far
+  camera.position.y = 100;
+  camera.position.z = 500;
   scene.add(camera);
 
   // Set up the scene
@@ -53,7 +56,7 @@ function buildScene() {
 
   // Build the floor
   var cylinder = new THREE.Mesh(
-    new THREE.CylinderGeometry(100, 100, 10, 50, 10, false),
+    new THREE.CylinderGeometry(r = 100, r, 10, 50, 10),
     new THREE.MeshLambertMaterial({
       color: MYENV.scene.floorColor
     })
@@ -61,14 +64,24 @@ function buildScene() {
   cylinder.position.y = -35;
   scene.add(cylinder);
 
+  // Build the pendulum
+  pPivot = new THREE.Mesh(
+    new THREE.SphereGeometry(5, 8, 8),
+    new THREE.MeshLambertMaterial({
+      color: MYENV.scene.pendulumColor
+    })
+  );
+  pPivot.position.y = MYENV.pendulum.length;
+  scene.add(pPivot);
+
   // Add a sphere
-  pendulumBob = new THREE.Mesh(
+  pBob = new THREE.Mesh(
     new THREE.SphereGeometry(20, 16, 16),
     new THREE.MeshLambertMaterial({
       color: MYENV.scene.pendulumColor
     })
   );
-  scene.add(pendulumBob);
+  scene.add(pBob);
 
 
   // Add the lighting
@@ -86,8 +99,14 @@ function animate() {
 }
 
 function render() {
-  var timeDelta = clock.getElapsedTime();
-  pendulumBob.position.x = 100 * Math.cos(timeDelta);
+
+  // Swing the pendulum
+  var timeElapsed = clock.getElapsedTime();
+  var T = Math.sqrt( MYENV.pendulum.length / (980) );
+  var theta = THREE.Math.degToRad(10) * Math.cos(timeElapsed / T);
+  pBob.position.x = MYENV.pendulum.length * Math.sin(theta);
+  pBob.position.y = MYENV.pendulum.length - (MYENV.pendulum.length * Math.cos(theta));
+  // pBob.position.y = MYENV.pendulum.length;
 
   renderer.render(scene, camera);
 }
