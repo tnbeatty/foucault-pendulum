@@ -44,6 +44,7 @@ THREE.CoinGeometry = function(radius, height, radiusSegments, heightSegments, ca
 	capTop.position.y = 0.5;
 	capBottom.position.y = -0.5;
 	capTop.rotation.x = Math.PI;
+	capBottom.rotation.y = Math.PI;
 
 	var coin = new THREE.Object3D();
 	coin.add(coinSide);

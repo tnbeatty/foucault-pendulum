@@ -8,10 +8,7 @@
  *
  */
 
-var MYENV = { // The variables that define the game environment
-  width: window.innerWidth,
-  height: window.innerHeight,
-  aspect: window.innerWidth / window.innerHeight,
+var MYENV = { // The variables that define the environment
   scene: {
     bgColor: '#D6F1FF',
     floorColor: 0xEDCBA0,
@@ -20,7 +17,7 @@ var MYENV = { // The variables that define the game environment
     lightColor: 0xF7EFBE
   },
   pendulum: {
-    length: 350,
+    length: 500,
     rotRateEarth: 360, // degrees per day
     latitude: 0 // latitude of the pendulum on the earth
   }
@@ -28,7 +25,14 @@ var MYENV = { // The variables that define the game environment
 
 // Global variables
 var scene, skyscene, camera, skycamera, renderer;
-var pBob, pPivot;
+var pBob, pPivot, compassFloor;
+var windowWidth = window.innerWidth,
+windowHeight = window.innerHeight,
+windowAspect = window.innerWidth / window.innerHeight,
+windowHalfX = window.innerWidth / 2,
+windowHalfY = window.innerHeight / 2;
+var mouseX = 0,
+mouseY = 0;
 var clock = new THREE.Clock(true);
 var isAnimating = true;
 
@@ -37,12 +41,12 @@ function init() {
   skyscene = new THREE.Scene();
 
   // Set up the camera
-  camera = new THREE.PerspectiveCamera(60, MYENV.aspect, 1, 100000); // FOV, Aspect, Near, Far
+  camera = new THREE.PerspectiveCamera(60, windowAspect, 1, 100000); // FOV, Aspect, Near, Far
   camera.position.y = 200;
   camera.position.z = 700;
   scene.add(camera);
 
-  skycamera = new THREE.PerspectiveCamera(60, MYENV.aspect, 1, 100000);
+  skycamera = new THREE.PerspectiveCamera(60, windowAspect, 1, 100000);
 
   // Set up the scene
   buildScene();
@@ -50,19 +54,20 @@ function init() {
 
   // Render the scene
   renderer = new THREE.WebGLRenderer();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(windowWidth, windowHeight);
   renderer.autoClear = false;
   document.getElementById('container').appendChild(renderer.domElement);
 
+  window.addEventListener('resize', onWindowResize, false);
 }
 
 function buildScene() {
 
   // Build the floor
   var compassTexture = THREE.ImageUtils.loadTexture("assets/textures/compassrose.png");
-  var compassFloor = new THREE.CoinGeometry(200.0, 10.0, 100.0, 10.0, compassTexture, MYENV.scene.floorColor);
+  compassFloor = new THREE.CoinGeometry(200.0, 10.0, 100.0, 10.0, compassTexture, MYENV.scene.floorColor);
   compassFloor.position.y = -35;
-  compassFloor.rotation.y = - Math.PI / 2;
+  compassFloor.rotation.y = -Math.PI / 2;
   scene.add(compassFloor);
 
   // Build the pendulum
@@ -71,7 +76,7 @@ function buildScene() {
     new THREE.MeshLambertMaterial({
       color: MYENV.scene.pivotColor
     })
-  );
+    );
   pPivot.position.y = MYENV.pendulum.length;
   scene.add(pPivot);
 
@@ -81,7 +86,7 @@ function buildScene() {
     new THREE.MeshLambertMaterial({
       color: MYENV.scene.pendulumColor
     })
-  );
+    );
   scene.add(pBob);
 
   // Add the lighting
@@ -98,9 +103,9 @@ function buildSkybox() {
   var path = "assets/textures/";
   var format = '.jpg';
   var urls = [
-    path + 'px' + format, path + 'nx' + format,
-    path + 'py' + format, path + 'ny' + format,
-    path + 'pz' + format, path + 'nz' + format
+  path + 'px' + format, path + 'nx' + format,
+  path + 'py' + format, path + 'ny' + format,
+  path + 'pz' + format, path + 'nz' + format
   ];
   var textureCube = THREE.ImageUtils.loadTextureCube(urls, new THREE.CubeRefractionMapping());
   var material = new THREE.MeshBasicMaterial({
@@ -121,9 +126,30 @@ function buildSkybox() {
     side: THREE.BackSide
 
   }),
-    mesh = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 100), material);
+  mesh = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 100), material);
   skyscene.add(mesh);
 }
+
+/** EVENT LISTENERS **/
+
+function onWindowResize() {
+  windowHalfX = window.innerWidth / 2;
+  windowHalfY = window.innerHeight / 2;
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  skycamera.aspect = window.innerWidth / window.innerHeight;
+  skycamera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function onDocumentMouseMove(event) {
+
+  mouseX = (event.clientX - windowHalfX) * 4;
+  mouseY = (event.clientY - windowHalfY) * 4;
+
+}
+
+/** DRAWING **/
 
 function animate() {
   if (isAnimating) requestAnimationFrame(animate);
@@ -142,6 +168,9 @@ function render() {
 
   var rotRate = MYENV.pendulum.rotRateEarth * Math.cos(MYENV.pendulum.latitude);
 
+  camera.position.x += ( mouseX - camera.position.x ) * .05;
+  camera.position.y += ( - mouseY - camera.position.y ) * .05;
+
   camera.lookAt(scene.position);
   skycamera.rotation.copy(camera.rotation);
 
@@ -150,6 +179,9 @@ function render() {
 }
 
 $(document).ready(function() {
+
+  document.addEventListener('mousemove', onDocumentMouseMove, false);
+
   init();
   animate();
 });
