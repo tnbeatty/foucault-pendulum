@@ -18,10 +18,10 @@ var MYENV = { // The variables that define the environment
   },
   pendulum: {
     length: 500,
-    initialFloorRotation: -Math.PI / 2,
+    initialFloorRotation: 3 * Math.PI / 2,
     startAngle: 15, // degrees
     rotRateEarth: 360.0, // degrees per day
-    latitude: 40 // latitude of the pendulum on the earth (degrees)
+    latitude: 90 // latitude of the pendulum on the earth (degrees above equator)
   }
 }
 
@@ -58,7 +58,9 @@ function init() {
   resetCompassOrientation();
 
   // Render the scene
-  renderer = new THREE.WebGLRenderer({ antialiasing: true });
+  renderer = new THREE.WebGLRenderer({
+    antialiasing: true
+  });
   renderer.setSize(windowWidth, windowHeight);
   renderer.autoClear = false;
   document.getElementById('container').appendChild(renderer.domElement);
@@ -70,7 +72,7 @@ function buildScene() {
 
   // Build the floor
   var compassTexture = THREE.ImageUtils.loadTexture("assets/textures/compassrose.png");
-  compassFloor = new THREE.CoinGeometry(200.0, 10.0, 100.0, 10.0, compassTexture, MYENV.scene.floorColor);
+  compassFloor = new THREE.CoinGeometry(250.0, 10.0, 100.0, 10.0, compassTexture, MYENV.scene.floorColor);
   compassFloor.position.y = -35;
   compassFloor.rotation.y = MYENV.pendulum.initialFloorRotation;
   scene.add(compassFloor);
@@ -118,9 +120,10 @@ function buildScene() {
 
 function resetCompassOrientation() {
   var today = new Date();
-  today.setHours(0,0,0,0);
-  var delta = ( (new Date()) - today ) / 1000; // Time delta in sec
-  startRotation = MYENV.pendulum.initialFloorRotation + (floorRotationRate() * delta);
+  today.setHours(0, 0, 0, 0);
+  var delta = ((new Date()) - today) / 1000; // Time delta in sec
+  // delta = 6*60*60;
+  startRotation = (MYENV.pendulum.initialFloorRotation + (floorRotationRate() * delta));
   compassFloor.rotation.y = startRotation;
 }
 
@@ -209,7 +212,7 @@ function render() {
 
 var floorRotationRate = function() { // Rotation rate in rad per second (based on latitude)
   var degPerSec = MYENV.pendulum.rotRateEarth / (24.0 * 60.0 * 60.0);
-  return ( THREE.Math.degToRad(degPerSec) * Math.cos(MYENV.pendulum.latitude) );
+  return (THREE.Math.degToRad(degPerSec) * Math.cos( THREE.Math.degToRad(90 - MYENV.pendulum.latitude) ));
 }
 
 $(document).ready(function() {
@@ -218,4 +221,23 @@ $(document).ready(function() {
 
   init();
   animate();
+
+  function resetLongitude(zip) {
+    // geoAPIKey = 'AIzaSyBOUIHxeKxqT9JKqg8DXsqkkwixjMVNsCA';
+    // url = 'https://maps.googleapis.com/maps/api/geocode/json?address='+ zip +'&sensor=false&key=' + geoAPIKey;
+    url = 'https://maps.googleapis.com/maps/api/geocode/json?address='+ zip +'&sensor=false';
+    $.getJSON(url, function(data) {
+      var latitude = data.results[0].geometry.location.lat;
+      console.log('Setting latitude to: ' + latitude);
+      MYENV.pendulum.latitude = latitude;
+      resetCompassOrientation();
+    });
+  }
+
+  $("#zipinput").keyup(function(e) {
+    if (e.keyCode == 13) {
+      var zipcode = $(this).val();
+      resetLongitude(zipcode);
+    }
+  });
 });
