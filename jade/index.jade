@@ -13,8 +13,9 @@ html(lang='en')
 				h2 Foucault Pendulum 
 				h3 by <a href="http://natebeatty.com">Nate Beatty</a>
 				p Simulation of a foucault pendulum as if it started swinging at an angle of 15 degrees in the north-south plane relative to the earth's position at the start of the day today. 
-				p Enter your zip code in the box below to see the real-time simulation at the pendulum at your location. The default location, loaded when the page loads, is at the north pole.
+				p Enter your zip code in the box below to see the real-time simulation of the pendulum as if it were positioned at your current location. The default location, loaded when the page loads, is at the north pole.
 				input(type='text', name='zip', placeholder='zip code', id='zipinput')
+				p.small This site was built using <a href="http://threejs.org">three.js</a> and the <a href="https://developers.google.com/maps/documentation/business/geolocation">Google Geolocate API</a>. Background image by <a href="http://www.zfight.com/">Jochum Skoglund</a>. Simulation <a href="http://get.webgl.org">requires WebGL</a> and a <a href="http://browsehappy.com">modern browser</a> to run properly. Thanks for visiting!
 
 		script(src='js/three.js/three.min.js')
 		script(src='js/three.js/CoinGeometry.js')
