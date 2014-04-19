@@ -1,9 +1,6 @@
 # System Files
 .DS_Store
 
-# Generated
-node_modules/
-styles/
-
 # Temporary
 .sass-cache
+node_modules/
