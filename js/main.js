@@ -18,21 +18,24 @@ var MYENV = { // The variables that define the environment
   },
   pendulum: {
     length: 500,
-    rotRateEarth: 360, // degrees per day
-    latitude: 0 // latitude of the pendulum on the earth
+    initialFloorRotation: -Math.PI / 2,
+    startAngle: 15, // degrees
+    rotRateEarth: 360.0, // degrees per day
+    latitude: 40 // latitude of the pendulum on the earth (degrees)
   }
 }
 
 // Global variables
 var scene, skyscene, camera, skycamera, renderer;
-var pBob, pPivot, compassFloor;
+var pBob, pCable, pPivot, compassFloor;
+var startRotation;
 var windowWidth = window.innerWidth,
-windowHeight = window.innerHeight,
-windowAspect = window.innerWidth / window.innerHeight,
-windowHalfX = window.innerWidth / 2,
-windowHalfY = window.innerHeight / 2;
+  windowHeight = window.innerHeight,
+  windowAspect = window.innerWidth / window.innerHeight,
+  windowHalfX = window.innerWidth / 2,
+  windowHalfY = window.innerHeight / 2;
 var mouseX = 0,
-mouseY = 0;
+  mouseY = 0;
 var clock = new THREE.Clock(true);
 var isAnimating = true;
 
@@ -52,8 +55,10 @@ function init() {
   buildScene();
   buildSkybox();
 
+  resetCompassOrientation();
+
   // Render the scene
-  renderer = new THREE.WebGLRenderer();
+  renderer = new THREE.WebGLRenderer({ antialiasing: true });
   renderer.setSize(windowWidth, windowHeight);
   renderer.autoClear = false;
   document.getElementById('container').appendChild(renderer.domElement);
@@ -67,18 +72,31 @@ function buildScene() {
   var compassTexture = THREE.ImageUtils.loadTexture("assets/textures/compassrose.png");
   compassFloor = new THREE.CoinGeometry(200.0, 10.0, 100.0, 10.0, compassTexture, MYENV.scene.floorColor);
   compassFloor.position.y = -35;
-  compassFloor.rotation.y = -Math.PI / 2;
+  compassFloor.rotation.y = MYENV.pendulum.initialFloorRotation;
   scene.add(compassFloor);
 
   // Build the pendulum
+
+  // Add the pivot
   pPivot = new THREE.Mesh(
     new THREE.SphereGeometry(5, 8, 8),
     new THREE.MeshLambertMaterial({
       color: MYENV.scene.pivotColor
     })
-    );
+  );
   pPivot.position.y = MYENV.pendulum.length;
   scene.add(pPivot);
+
+  // Add the cable
+  pCableGeometry = new THREE.Geometry();
+  pCableGeometry.vertices.push(new THREE.Vector3(0, pPivot.position.y, 0));
+  pCableGeometry.vertices.push(new THREE.Vector3(0, 0, 0));
+  pCable = new THREE.Line(pCableGeometry,
+    new THREE.LineBasicMaterial({
+      color: 0xffffff
+    })
+  );
+  // scene.add(pCable);
 
   // Add a sphere
   pBob = new THREE.Mesh(
@@ -86,7 +104,7 @@ function buildScene() {
     new THREE.MeshLambertMaterial({
       color: MYENV.scene.pendulumColor
     })
-    );
+  );
   scene.add(pBob);
 
   // Add the lighting
@@ -96,16 +114,23 @@ function buildScene() {
   var directionalLight2 = new THREE.DirectionalLight(MYENV.lightColor, 0.5);
   directionalLight2.position.set(-0.5, -1, -0.5);
   scene.add(directionalLight2);
+}
 
+function resetCompassOrientation() {
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  var delta = ( (new Date()) - today ) / 1000; // Time delta in sec
+  startRotation = MYENV.pendulum.initialFloorRotation + (floorRotationRate() * delta);
+  compassFloor.rotation.y = startRotation;
 }
 
 function buildSkybox() {
   var path = "assets/textures/";
   var format = '.jpg';
   var urls = [
-  path + 'px' + format, path + 'nx' + format,
-  path + 'py' + format, path + 'ny' + format,
-  path + 'pz' + format, path + 'nz' + format
+    path + 'px' + format, path + 'nx' + format,
+    path + 'py' + format, path + 'ny' + format,
+    path + 'pz' + format, path + 'nz' + format
   ];
   var textureCube = THREE.ImageUtils.loadTextureCube(urls, new THREE.CubeRefractionMapping());
   var material = new THREE.MeshBasicMaterial({
@@ -126,7 +151,7 @@ function buildSkybox() {
     side: THREE.BackSide
 
   }),
-  mesh = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 100), material);
+    mesh = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 100), material);
   skyscene.add(mesh);
 }
 
@@ -160,22 +185,31 @@ function render() {
 
   // Swing the pendulum
   var timeElapsed = clock.getElapsedTime();
-  var timeDelta = clock.getDelta();
+  // var timeDelta = clock.getDelta() / 1000;
   var T = Math.sqrt(MYENV.pendulum.length / (980));
-  var theta = THREE.Math.degToRad(10) * Math.cos(timeElapsed / T);
+  var theta = THREE.Math.degToRad(MYENV.pendulum.startAngle) * Math.cos(timeElapsed / T);
   pBob.position.x = MYENV.pendulum.length * Math.sin(theta);
   pBob.position.y = MYENV.pendulum.length - (MYENV.pendulum.length * Math.cos(theta));
+  pCable.geometry.vertices[1] = pBob.position;
+  pCable.geometry.verticesNeedUpdate = true;
 
-  var rotRate = MYENV.pendulum.rotRateEarth * Math.cos(MYENV.pendulum.latitude);
+  // Rotate the floor appropriately
+  var rotationAddition = floorRotationRate() * timeElapsed;
+  compassFloor.rotation.y = startRotation + rotationAddition;
 
-  camera.position.x += ( mouseX - camera.position.x ) * .05;
-  camera.position.y += ( - mouseY - camera.position.y ) * .05;
-
+  // Track the camera position via mouse input
+  camera.position.x += (mouseX - camera.position.x) * .05;
+  camera.position.y += (-mouseY - camera.position.y) * .05;
   camera.lookAt(scene.position);
   skycamera.rotation.copy(camera.rotation);
 
   renderer.render(skyscene, skycamera);
   renderer.render(scene, camera);
+}
+
+var floorRotationRate = function() { // Rotation rate in rad per second (based on latitude)
+  var degPerSec = MYENV.pendulum.rotRateEarth / (24.0 * 60.0 * 60.0);
+  return ( THREE.Math.degToRad(degPerSec) * Math.cos(MYENV.pendulum.latitude) );
 }
 
 $(document).ready(function() {
