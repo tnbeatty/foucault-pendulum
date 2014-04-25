@@ -3,6 +3,8 @@ Foucault Pendulum Simulation
 
 A simulation of a swinging Foucault Pendulum, written for the web by [Nate Beatty](http://natebeatty.com).
 
+Check out a [live demo](http://natebeatty.com/foucault-pendulum) in a WebGL enabled browser.
+
 Development and Contributing
 ---
 
