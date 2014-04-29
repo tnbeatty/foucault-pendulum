@@ -71,8 +71,12 @@ function init() {
 function buildScene() {
 
   // Build the floor
-  var compassTexture = THREE.ImageUtils.loadTexture("assets/textures/compassrose.png");
-  compassFloor = new THREE.CoinGeometry(250.0, 10.0, 100.0, 10.0, compassTexture, MYENV.scene.floorColor);
+  var compassTexture_top = THREE.ImageUtils.loadTexture(
+    "assets/textures/compassrose_top.png");
+  var compassTexture_bottom = THREE.ImageUtils.loadTexture(
+    "assets/textures/compassrose_bottom.png");
+  compassFloor = new THREE.CoinGeometry(250.0, 10.0, 100.0, 10.0,
+    compassTexture_top, compassTexture_bottom, MYENV.scene.floorColor);
   compassFloor.position.y = -35;
   compassFloor.rotation.y = MYENV.pendulum.initialFloorRotation;
   scene.add(compassFloor);
@@ -123,7 +127,8 @@ function resetCompassOrientation() {
   today.setHours(0, 0, 0, 0);
   var delta = ((new Date()) - today) / 1000; // Time delta in sec
   // delta = 6*60*60;
-  startRotation = (MYENV.pendulum.initialFloorRotation + (floorRotationRate() * delta));
+  startRotation = (MYENV.pendulum.initialFloorRotation + (floorRotationRate() *
+    delta));
   compassFloor.rotation.y = startRotation;
 }
 
@@ -190,9 +195,11 @@ function render() {
   var timeElapsed = clock.getElapsedTime();
   // var timeDelta = clock.getDelta() / 1000;
   var T = Math.sqrt(MYENV.pendulum.length / (980));
-  var theta = THREE.Math.degToRad(MYENV.pendulum.startAngle) * Math.cos(timeElapsed / T);
+  var theta = THREE.Math.degToRad(MYENV.pendulum.startAngle) * Math.cos(
+    timeElapsed / T);
   pBob.position.x = MYENV.pendulum.length * Math.sin(theta);
-  pBob.position.y = MYENV.pendulum.length - (MYENV.pendulum.length * Math.cos(theta));
+  pBob.position.y = MYENV.pendulum.length - (MYENV.pendulum.length * Math.cos(
+    theta));
   pCable.geometry.vertices[1] = pBob.position;
   pCable.geometry.verticesNeedUpdate = true;
 
@@ -212,7 +219,8 @@ function render() {
 
 var floorRotationRate = function() { // Rotation rate in rad per second (based on latitude)
   var degPerSec = MYENV.pendulum.rotRateEarth / (24.0 * 60.0 * 60.0);
-  return (THREE.Math.degToRad(degPerSec) * Math.cos( THREE.Math.degToRad(90 - MYENV.pendulum.latitude) ));
+  return (THREE.Math.degToRad(degPerSec) * Math.cos(THREE.Math.degToRad(90 -
+    MYENV.pendulum.latitude)));
 }
 
 $(document).ready(function() {
@@ -222,22 +230,29 @@ $(document).ready(function() {
   init();
   animate();
 
-  function resetLongitude(zip) {
-    // geoAPIKey = 'AIzaSyBOUIHxeKxqT9JKqg8DXsqkkwixjMVNsCA';
-    // url = 'https://maps.googleapis.com/maps/api/geocode/json?address='+ zip +'&sensor=false&key=' + geoAPIKey;
-    url = 'https://maps.googleapis.com/maps/api/geocode/json?address='+ zip +'&sensor=false';
-    $.getJSON(url, function(data) {
-      var latitude = data.results[0].geometry.location.lat;
-      console.log('Setting latitude to: ' + latitude);
-      MYENV.pendulum.latitude = latitude;
-      resetCompassOrientation();
-    });
-  }
+  function resetPosition(latitude) {
+    console.log('Resetting lattitude to ' + latitude);
+    MYENV.pendulum.latitude = latitude;
+    resetCompassOrientation();
+  };
 
-  $("#zipinput").keyup(function(e) {
-    if (e.keyCode == 13) {
-      var zipcode = $(this).val();
-      resetLongitude(zipcode);
-    }
-  });
+  $('#geocomplete').geocomplete({
+    map: '.map_canvas'
+  })
+    .bind("geocode:result", function(event, result) {
+      console.log("Result: ");
+      console.log(result);
+      resetPosition(result.geometry.location.k);
+    })
+    .bind("geocode:error", function(event, status) {
+      console.log("ERROR: " + status);
+    })
+    .bind("geocode:multiple", function(event, results) {
+      console.log("Multiple: " + results.length + " results found");
+    });
+
 });
+
+// $(function(){
+//   $('#geocomplete').geocomplete();
+// });

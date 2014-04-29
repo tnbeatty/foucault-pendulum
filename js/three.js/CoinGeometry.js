@@ -3,7 +3,7 @@
  */
 
 
-THREE.CoinGeometry = function(radius, height, radiusSegments, heightSegments, capTexture, sideColor) {
+THREE.CoinGeometry = function(radius, height, radiusSegments, heightSegments, capTexture_top, capTexture_bottom, sideColor) {
 	var sideGeometry = new THREE.CylinderGeometry(radius, radius, height, radiusSegments, heightSegments, true);
 	var capGeometry = new THREE.Geometry();
 	var r = radius;
@@ -36,11 +36,14 @@ THREE.CoinGeometry = function(radius, height, radiusSegments, heightSegments, ca
 	var coinSide =
 		new THREE.Mesh(sideGeometry, sideMaterial);
 
-	var capMaterial = new THREE.MeshLambertMaterial({
-		map: capTexture
+	var capMaterial_top = new THREE.MeshLambertMaterial({
+		map: capTexture_top
 	});
-	var capTop = new THREE.Mesh(capGeometry, capMaterial);
-	var capBottom = new THREE.Mesh(capGeometry, capMaterial);
+  var capMaterial_bottom = new THREE.MeshLambertMaterial({
+    map: capTexture_bottom
+  });
+	var capTop = new THREE.Mesh(capGeometry, capMaterial_top);
+	var capBottom = new THREE.Mesh(capGeometry, capMaterial_bottom);
 	capTop.position.y = 0.5;
 	capBottom.position.y = -0.5;
 	capTop.rotation.x = Math.PI;
