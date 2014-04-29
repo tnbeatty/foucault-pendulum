@@ -8,6 +8,8 @@
  *
  */
 
+if (!Detector.webgl) Detector.addGetWebGLMessage();
+
 var MYENV = { // The variables that define the environment
   scene: {
     bgColor: '#D6F1FF',
@@ -227,8 +229,10 @@ $(document).ready(function() {
 
   document.addEventListener('mousemove', onDocumentMouseMove, false);
 
-  init();
-  animate();
+  if (Detector.webgl) {
+    init();
+    animate();
+  }
 
   function resetPosition(latitude) {
     console.log('Resetting lattitude to ' + latitude);
